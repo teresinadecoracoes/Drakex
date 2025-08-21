@@ -1,128 +1,165 @@
-<!DOCTYPE html>
+
+   <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DRAKENATION Ultra Casino</title>
 <style>
-body { margin:0; font-family:Arial,sans-serif; background:radial-gradient(circle at top,#111,#000); color:#fff; text-align:center; }
-header { padding:20px; }
-h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
-.wallet { background:#222; padding:12px 20px; border-radius:12px; display:inline-block; margin-bottom:20px; font-size:20px; box-shadow:0 0 10px #a020f0; display:none; }
-.btn { background:purple; color:#fff; border:none; padding:12px 24px; font-size:18px; border-radius:12px; cursor:pointer; margin:5px; transition:0.3s; }
-.btn:hover { background:#a020f0; box-shadow:0 0 15px #a020f0; }
-#loginForm { display:block; margin:20px auto; max-width:300px; text-align:left; background:#222; padding:20px; border-radius:12px; }
-#loginForm input { width:100%; padding:10px; margin:5px 0; border-radius:8px; border:none; }
-.game-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:20px; padding:20px; display:none; }
-.game-card { background:#222; border-radius:16px; padding:20px; position:relative; box-shadow:0 0 20px #a020f0 inset; overflow:hidden; min-height:320px; }
-.game-card img { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.6; z-index:0; border-radius:16px; }
-.game-content { position:relative; z-index:1; }
-.game-result { font-size:28px; font-weight:bold; margin-top:20px; text-shadow:0 0 10px #000; transition: all 0.5s ease; }
-.timer-bar { width:100%; height:20px; background:#555; border-radius:10px; overflow:hidden; margin:10px 0; }
-.timer-fill { height:100%; background:lime; width:100%; transition: width 1s linear; }
-.history { padding:20px; max-width:800px; margin:auto; text-align:left; display:none; }
-.history-entry { background:#222; padding:10px; margin:5px 0; border-radius:8px; display:flex; justify-content:space-between; transform: translateX(-100%); animation: slideIn 0.5s forwards; }
-@keyframes slideIn { to { transform: translateX(0); } }
-#adminPanel { display:none; padding:20px; max-width:800px; margin:auto; background:#111; border-radius:12px; text-align:left; }
-#adminPanel table { width:100%; border-collapse: collapse; margin-top:10px; }
-#adminPanel table, #adminPanel th, #adminPanel td { border:1px solid #444; padding:8px; text-align:center; }
-#adminPanel th { background:#222; }
-/* Slots animation */
-.slot-wheel { font-size:50px; height:60px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; }
-.slot-symbol { height:60px; display:flex; justify-content:center; align-items:center; }
+  body { margin:0; font-family:Arial,sans-serif; background:radial-gradient(circle at top,#111,#000); color:#fff; text-align:center; }
+  header { padding:20px; }
+  h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
+  .wallet { background:#222; padding:12px 20px; border-radius:12px; display:inline-flex; align-items:center; gap:10px; margin-bottom:20px; font-size:18px; box-shadow:0 0 10px #a020f0; }
+  .btn { background:purple; color:#fff; border:none; padding:10px 18px; font-size:16px; border-radius:10px; cursor:pointer; margin:4px; transition:0.3s; }
+  .btn:hover { background:#a020f0; box-shadow:0 0 15px #a020f0; }
+  .deposit-box { background:#222; padding:20px; border-radius:12px; max-width:400px; margin:20px auto; text-align:center; box-shadow:0 0 15px #a020f0; display:none; }
+  .deposit-box input { width:80%; padding:10px; border-radius:8px; border:none; margin:10px 0; }
+  #qrcode { background:#fff; padding:10px; border-radius:10px; display:inline-block; margin-top:10px; }
+  .game-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px; padding:20px; }
+  .game-card { background:#222; border-radius:16px; padding:20px; box-shadow:0 0 20px #a020f0 inset; min-height:280px; }
+  .game-result { font-size:22px; font-weight:bold; margin-top:10px; text-shadow:0 0 10px #000; }
+  .bet-input { width:60%; padding:8px; border-radius:8px; border:none; margin:8px 0; }
 </style>
 </head>
 <body>
 
 <header>
-<h1>🎲 DRAKENATION Ultra Casino 🎲</h1>
-<div class="wallet" id="wallet">💰 Saldo: $<span id="balance">0</span> <button class="btn" onclick="sacar()">Sacar</button></div>
+  <h1>🎲 DRAKENATION Ultra Casino 🎲</h1>
+  <div class="wallet">💰 Saldo: $<span id="balance">1000</span>
+    <button class="btn" onclick="sacar()">Sacar</button>
+    <button class="btn" onclick="abrirDeposito()">Depositar</button>
+  </div>
 </header>
 
-<div id="loginForm">
-  <h2>Criar Conta / Entrar</h2>
-  <input type="text" id="username" placeholder="Nome de usuário">
-  <input type="password" id="password" placeholder="Senha">
-  <button class="btn" onclick="login()">Entrar / Criar Conta</button>
+<div class="deposit-box" id="depositBox">
+  <h2>Depósito</h2>
+  <input type="number" id="depositValue" placeholder="Digite o valor">
+  <button class="btn" onclick="gerarQRCode()">Gerar QRCode</button>
+  <div id="qrcode"></div>
+  <button class="btn" id="confirmDepositBtn" style="display:none;" onclick="confirmarDeposito()">Confirmar Depósito</button>
 </div>
 
-<div class="game-container" id="games">
+<div class="game-container">
   <!-- Bac Bo -->
-  <div class="game-card" id="bacboCard">
-    <img src="dealer.gif" alt="Dealer">
-    <div class="game-content">
-      <h2>Bac Bo (Azul/Vermelho)</h2>
-      <div class="game-result" id="bacboResult"></div>
-      <div class="timer-bar"><div class="timer-fill" id="bacboTimerFill"></div></div>
-      <button class="btn" id="betBlue" onclick="placeBet('Azul')">Apostar Azul</button>
-      <button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
-    </div>
+  <div class="game-card">
+    <h2>Bac Bo</h2>
+    <input type="number" id="bacboBet" class="bet-input" placeholder="Valor da aposta">
+    <div class="game-result" id="bacboResult"></div>
+    <button class="btn" onclick="betBacBo('Azul')">Apostar Azul</button>
+    <button class="btn" onclick="betBacBo('Vermelho')">Apostar Vermelho</button>
   </div>
 
   <!-- Roleta -->
-  <div class="game-card" id="roletaCard">
-    <img src="dealer.gif" alt="Dealer">
-    <div class="game-content">
-      <h2>🎡 Roleta</h2>
-      <div class="game-result" id="roletaResult"></div>
-      <div class="timer-bar"><div class="timer-fill" id="roletaTimerFill"></div></div>
-      <button class="btn" onclick="betRoleta('Vermelho')">Apostar Vermelho</button>
-      <button class="btn" onclick="betRoleta('Preto')">Apostar Preto</button>
-    </div>
+  <div class="game-card">
+    <h2>🎡 Roleta</h2>
+    <input type="number" id="roletaBet" class="bet-input" placeholder="Valor da aposta">
+    <div class="game-result" id="roletaResult"></div>
+    <button class="btn" onclick="betRoleta('Vermelho')">Apostar Vermelho</button>
+    <button class="btn" onclick="betRoleta('Preto')">Apostar Preto</button>
   </div>
 
   <!-- Slots -->
-  <div class="game-card" id="slotsCard">
-    <img src="dealer.gif" alt="Dealer">
-    <div class="game-content">
-      <h2>🎰 Slots</h2>
-      <div class="slot-wheel" id="slot1"><div class="slot-symbol">🍒</div></div>
-      <div class="slot-wheel" id="slot2"><div class="slot-symbol">🍒</div></div>
-      <div class="slot-wheel" id="slot3"><div class="slot-symbol">🍒</div></div>
-      <div class="game-result" id="slotsResult"></div>
-      <button class="btn" onclick="spinSlots()">Girar</button>
-    </div>
-  </div>
-
-  <!-- Blackjack -->
-  <div class="game-card" id="blackjackCard">
-    <img src="dealer.gif" alt="Dealer">
-    <div class="game-content">
-      <h2>🃏 Blackjack</h2>
-      <div class="game-result" id="blackjackResult"></div>
-      <button class="btn" onclick="playBlackjack()">Jogar</button>
-    </div>
+  <div class="game-card">
+    <h2>🎰 Slots</h2>
+    <input type="number" id="slotsBet" class="bet-input" placeholder="Valor da aposta">
+    <div class="game-result" id="slotsResult"></div>
+    <button class="btn" onclick="betSlots()">Girar</button>
   </div>
 </div>
 
-<section class="history" id="historySection">
-<h2>📜 Histórico de Jogos</h2>
-<div id="history"></div>
-</section>
-
-<section id="adminPanel">
-<h2>🛠 Painel Admin</h2>
-<h3>Usuários</h3>
-<table id="userTable">
-  <tr><th>Usuário</th><th>Saldo</th><th>Ação</th></tr>
-</table>
-<h3>Histórico Completo</h3>
-<div id="fullHistory"></div>
-</section>
-
-<audio id="soundBet" src="https://www.soundjay.com/button/sounds/button-16.mp3"></audio>
-<audio id="soundWin" src="https://www.soundjay.com/button/sounds/button-09.mp3"></audio>
-
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script>
 let balance = 1000;
-let historyList = [];
-let bet = null;
-let bacboCountdown = 10;
-let bacboTimer;
-let roletaCountdown = 10;
-let roletaTimer;
-let currentUser = null;
+let depositPending = 0;
 
-const users = [
-  {username:'kawan', password:'123', balance
-   
+function updateBalance(){ document.getElementById('balance').innerText = balance; }
+function sacar(){ alert("Solicitação de saque enviada! (DEMO)"); }
+function abrirDeposito(){ document.getElementById('depositBox').style.display = 'block'; }
+
+function gerarQRCode(){
+  let val = parseInt(document.getElementById('depositValue').value);
+  if(!val || val < 5 || val > 50000){ alert("Depósito mínimo $5 e máximo $50.000"); return; }
+  let randomCode = 'DRAKEPAY-' + Math.floor(Math.random()*1000000);
+  let text = `Depósito de $${val} - Código: ${randomCode}`;
+  document.getElementById('qrcode').innerHTML = "";
+  QRCode.toCanvas(document.createElement('canvas'), text, { width:200 }, function(err, canvas){
+    if(err) console.error(err);
+    document.getElementById('qrcode').appendChild(canvas);
+  });
+  depositPending = val;
+  document.getElementById('confirmDepositBtn').style.display = 'inline-block';
+}
+
+function confirmarDeposito(){
+  if(depositPending > 0){
+    balance += depositPending;
+    updateBalance();
+    alert(`Depósito de $${depositPending} confirmado!`);
+    depositPending = 0;
+    document.getElementById('confirmDepositBtn').style.display = 'none';
+    document.getElementById('qrcode').innerHTML = '';
+    document.getElementById('depositValue').value = '';
+  }
+}
+
+// BAC BO
+function betBacBo(color){
+  let val = parseInt(document.getElementById('bacboBet').value);
+  if(!val || val <= 0){ alert('Digite um valor válido!'); return; }
+  if(val > balance){ alert('Saldo insuficiente!'); return; }
+  if(confirm(`Confirmar aposta de $${val} em ${color}?`)){
+    balance -= val;
+    let azul = Math.floor(Math.random()*12)+1;
+    let vermelho = Math.floor(Math.random()*12)+1;
+    let result = azul>vermelho ? 'Azul' : vermelho>azul ? 'Vermelho' : 'Empate';
+    let message = `Azul ${azul} x ${vermelho} Vermelho → ${result}`;
+    if(result === color){ balance += val*2; message += ` | Você ganhou $${val*2}!`; }
+    else if(result === 'Empate'){ balance += val; message += ` | Empate, aposta devolvida.`; }
+    else { message += ` | Você perdeu $${val}.`; }
+    document.getElementById('bacboResult').innerText = message;
+    updateBalance();
+  }
+}
+
+// ROLETA
+function betRoleta(color){
+  let val = parseInt(document.getElementById('roletaBet').value);
+  if(!val || val <= 0){ alert('Digite um valor válido!'); return; }
+  if(val > balance){ alert('Saldo insuficiente!'); return; }
+  if(confirm(`Confirmar aposta de $${val} no ${color}?`)){
+    balance -= val;
+    let colors = ['Vermelho','Preto'];
+    let win = colors[Math.floor(Math.random()*2)];
+    let message = `Resultado: ${win}`;
+    if(win === color){ balance += val*2; message += ` | Você ganhou $${val*2}!`; }
+    else { message += ` | Você perdeu $${val}.`; }
+    document.getElementById('roletaResult').innerText = message;
+    updateBalance();
+  }
+}
+
+// SLOTS
+function betSlots(){
+  let val = parseInt(document.getElementById('slotsBet').value);
+  if(!val || val <= 0){ alert('Digite um valor válido!'); return; }
+  if(val > balance){ alert('Saldo insuficiente!'); return; }
+  if(confirm(`Confirmar aposta de $${val} na slot?`)){
+    balance -= val;
+    let symbols = ['🍒','🍋','⭐','🔔','💎'];
+    let s1 = symbols[Math.floor(Math.random()*symbols.length)];
+    let s2 = symbols[Math.floor(Math.random()*symbols.length)];
+    let s3 = symbols[Math.floor(Math.random()*symbols.length)];
+    let result = `${s1} ${s2} ${s3}`;
+    let message = result;
+    if(s1===s2 && s2===s3){ balance += val*5; message += ` | JACKPOT! Você ganhou $${val*5}!`; }
+    else { message += ` | Você perdeu $${val}.`; }
+    document.getElementById('slotsResult').innerText = message;
+    updateBalance();
+  }
+}
+
+</script>
+
+</body>
+</html>
+
