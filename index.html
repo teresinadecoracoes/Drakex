@@ -1,107 +1,139 @@
-<!DOCTYPE html><html lang="pt-BR">
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DRAKENATION Casino</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom right, #000, #111, #2d0a3f);
-      color: white;
-      text-align: center;
-    }
-    header {
-      padding: 30px;
-    }
-    h1 {
-      font-size: 48px;
-      font-weight: bold;
-    }
-    .btn {
-      background: purple;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 18px;
-      border-radius: 12px;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-    .btn:hover {
-      background: #a020f0;
-    }
-    .wallet {
-      background: #222;
-      padding: 12px 20px;
-      border-radius: 12px;
-      display: inline-block;
-      margin-bottom: 20px;
-    }
-    .games {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: #222;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.6);
-    }
-    .history {
-      padding: 20px;
-      text-align: left;
-      max-width: 800px;
-      margin: auto;
-    }
-    .history-entry {
-      background: #222;
-      padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-    }
-    footer {
-      border-top: 1px solid #333;
-      color: gray;
-      padding: 20px;
-      margin-top: 30px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRAKENATION Casino</title>
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; font-family: 'Arial', sans-serif; }
+  body { background: linear-gradient(135deg, #000, #111, #2d0a3f); color: #fff; text-align: center; }
+  header { padding: 40px 20px; }
+  h1 { font-size: 48px; font-weight: bold; margin-bottom: 10px; }
+  p { font-size: 18px; margin-bottom: 20px; }
+  .btn { background: purple; color: white; border: none; padding: 12px 24px; font-size: 18px; border-radius: 12px; cursor: pointer; margin: 10px; transition: 0.3s; }
+  .btn:hover { background: #a020f0; }
+  .wallet { background: #222; padding: 12px 20px; border-radius: 12px; display: inline-block; margin-bottom: 20px; font-size: 20px; }
+  .games { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px; }
+  .card { background: #222; padding: 20px; border-radius: 16px; box-shadow: 0 0 15px rgba(0,0,0,0.6); transition: 0.3s; }
+  .card:hover { transform: translateY(-5px); box-shadow: 0 0 20px #a020f0; }
+  .history { padding: 20px; text-align: left; max-width: 800px; margin: auto; }
+  .history-entry { background: #222; padding: 10px; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; }
+  footer { border-top: 1px solid #333; color: gray; padding: 20px; margin-top: 30px; }
+
+  /* Modal */
+  .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background: rgba(0,0,0,0.8); }
+  .modal-content { background: #111; margin: 15% auto; padding: 20px; border-radius: 12px; width: 90%; max-width: 400px; }
+  .modal-content h2 { margin-bottom: 20px; }
+  .modal-content input { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 16px; }
+</style>
 </head>
 <body>
-  <header>
-    <h1>🎲 DRAKENATION 🎲</h1>
-    <p>Entre no mundo do entretenimento e jogue os melhores jogos de cassino online.</p>
-    <button class="btn" onclick="login()" id="loginBtn">Criar Conta / Entrar</button>
-    <p id="welcomeMsg" style="color:lime; font-weight:bold; display:none;">Bem-vindo(a) de volta!</p>
-  </header>  <div id="wallet" class="wallet" style="display:none;">💰 Saldo: $<span id="balance">1000</span></div>  <section class="games">
-    <div class="card">
-      <h2>🎡 Roleta</h2>
-      <button class="btn" onclick="play('Roleta')">Jogar Agora</button>
-    </div>
-    <div class="card">
-      <h2>🎰 Slots</h2>
-      <button class="btn" onclick="play('Slots')">Jogar Agora</button>
-    </div>
-    <div class="card">
-      <h2>🃏 Blackjack</h2>
-      <button class="btn" onclick="play('Blackjack')">Jogar Agora</button>
-    </div>
-  </section>  <section class="history">
-    <h2>📜 Histórico de Jogos</h2>
-    <div id="history"></div>
-  </section>  <footer>
-    © 2025 DRAKENATION Casino - Todos os direitos reservados.
-  </footer>  <script>
-    let loggedIn = false;
-    let balance = 1000;
-    let historyList = [];
 
-    function login() {
+<header>
+  <h1>🎲 DRAKENATION 🎲</h1>
+  <p>Entre no mundo do entretenimento e jogue os melhores jogos de cassino online.</p>
+  <button class="btn" onclick="openModal('login')">Criar Conta / Entrar</button>
+  <p id="welcomeMsg" style="color:lime; font-weight:bold; display:none;">Bem-vindo(a) de volta!</p>
+</header>
+
+<div id="wallet" class="wallet" style="display:none;">💰 Saldo: $<span id="balance">1000</span></div>
+
+<section class="games">
+  <div class="card">
+    <h2>🎡 Roleta</h2>
+    <button class="btn" onclick="play('Roleta')">Jogar Agora</button>
+  </div>
+  <div class="card">
+    <h2>🎰 Slots</h2>
+    <button class="btn" onclick="play('Slots')">Jogar Agora</button>
+  </div>
+  <div class="card">
+    <h2>🃏 Blackjack</h2>
+    <button class="btn" onclick="play('Blackjack')">Jogar Agora</button>
+  </div>
+</section>
+
+<section class="history">
+  <h2>📜 Histórico de Jogos</h2>
+  <div id="history"></div>
+</section>
+
+<footer>
+  © 2025 DRAKENATION Casino - Todos os direitos reservados.
+</footer>
+
+<!-- Modal de login/cadastro -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h2>Login / Cadastro</h2>
+    <input type="text" id="username" placeholder="Nome de usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <button class="btn" onclick="login()">Entrar</button>
+    <button class="btn" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+  let loggedIn = false;
+  let balance = 1000;
+  let historyList = [];
+
+  function openModal(type) {
+    document.getElementById('modal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+  }
+
+  function login() {
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+
+    if(user && pass) {
       loggedIn = true;
-      document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("welcomeMsg").style.display = "block";
+      document.getElementById("wallet").style.display = "inline-block";
+      closeModal();
+    } else {
+      alert('Preencha todos os campos!');
+    }
+  }
+
+  function play(game) {
+    if(!loggedIn) {
+      alert('Faça login primeiro!');
+      return;
+    }
+
+    let winChance = 0.5; // chance de ganhar
+    let amount = 100; // aposta fixa
+    let win = Math.random() < winChance;
+
+    balance += win ? amount : -amount;
+    document.getElementById("balance").innerText = balance;
+
+    historyList.push({game, win, amount});
+    updateHistory();
+  }
+
+  function updateHistory() {
+    const historyDiv = document.getElementById("history");
+    historyDiv.innerHTML = historyList.map(h => 
+      `<div class="history-entry">
+         <span>${h.game}</span>
+         <span style="color:${h.win?'lime':'red'};">${h.win ? '+$'+h.amount : '-$'+h.amount}</span>
+       </div>`).join('');
+  }
+
+  // Fechar modal ao clicar fora
+  window.onclick = function(event) {
+    if(event.target == document.getElementById('modal')) {
+      closeModal();
+    }
+  }
+</script>
+
+</body>
+</html>
     
