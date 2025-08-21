@@ -27,6 +27,9 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 #adminPanel table { width:100%; border-collapse: collapse; margin-top:10px; }
 #adminPanel table, #adminPanel th, #adminPanel td { border:1px solid #444; padding:8px; text-align:center; }
 #adminPanel th { background:#222; }
+/* Slots animation */
+.slot-wheel { font-size:50px; height:60px; overflow:hidden; display:flex; flex-direction:column; justify-content:flex-start; }
+.slot-symbol { height:60px; display:flex; justify-content:center; align-items:center; }
 </style>
 </head>
 <body>
@@ -73,6 +76,9 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
     <img src="dealer.gif" alt="Dealer">
     <div class="game-content">
       <h2>🎰 Slots</h2>
+      <div class="slot-wheel" id="slot1"><div class="slot-symbol">🍒</div></div>
+      <div class="slot-wheel" id="slot2"><div class="slot-symbol">🍒</div></div>
+      <div class="slot-wheel" id="slot3"><div class="slot-symbol">🍒</div></div>
       <div class="game-result" id="slotsResult"></div>
       <button class="btn" onclick="spinSlots()">Girar</button>
     </div>
@@ -115,136 +121,8 @@ let bacboCountdown = 10;
 let bacboTimer;
 let roletaCountdown = 10;
 let roletaTimer;
-
-const users = [
-  {username:'kawan', password:'123', balance:1000},
-  {username:'george', password:'123', balance:1000},
-  {username:'admin1', password:'admin', balance:Infinity}
-];
-
 let currentUser = null;
 
-const soundBet = document.getElementById('soundBet');
-const soundWin = document.getElementById('soundWin');
-
-function login(){
-  const username = document.getElementById('username').value.toLowerCase();
-  const password = document.getElementById('password').value;
-  const user = users.find(u=>u.username===username && u.password===password);
-  if(!user){ alert('Usuário ou senha incorretos!'); return; }
-  currentUser = user;
-  balance = user.balance;
-  document.getElementById('loginForm').style.display='none';
-  if(user.username==='admin1'){ showAdminPanel(); return; }
-  document.getElementById('games').style.display='grid';
-  document.getElementById('wallet').style.display='inline-block';
-  document.getElementById('historySection').style.display='block';
-  updateBalance();
-  startBacBo();
-  startRoleta();
-}
-
-// ADMIN PANEL
-function showAdminPanel(){
-  document.getElementById('adminPanel').style.display='block';
-  updateAdminUsers();
-  updateAdminHistory();
-}
-
-function updateAdminUsers(){
-  const table = document.getElementById('userTable');
-  table.innerHTML = '<tr><th>Usuário</th><th>Saldo</th><th>Ação</th></tr>';
-  users.forEach(u=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML=`<td>${u.username}</td><td>${u.balance===Infinity?'∞':u.balance}</td>
-    <td>${u.username!=='admin1'?`<button class="btn" onclick="resetUser('${u.username}')">Resetar Saldo</button>`:''}</td>`;
-    table.appendChild(tr);
-  });
-}
-
-function resetUser(username){
-  const user = users.find(u=>u.username===username);
-  if(user){ user.balance=1000; updateAdminUsers(); alert(`Saldo de ${username} resetado para 1000.`);}
-}
-
-function updateAdminHistory(){
-  const div=document.getElementById('fullHistory');
-  div.innerHTML = historyList.map(h=>`<div class="history-entry">
-    <span>${h.user||'-'} | ${h.game}: ${h.bet||'N/A'} | Resultado: ${h.result}</span>
-    <span style="color:${h.win?'lime':'red'};">${h.win?'+$'+h.amount:'-$'+h.amount}</span>
-  </div>`).join('');
-}
-
-// SACAR
-function sacar(){
-  if(currentUser.username==='admin1'){ alert('Admin não pode sacar.'); return; }
-  let valor = prompt('Quanto deseja sacar?');
-  valor = parseInt(valor);
-  if(valor>0 && valor<=balance){ balance-=valor; updateBalance(); alert(`Você sacou $${valor}`);}
-  else alert('Valor inválido!');
-}
-
-// BALANCE / HISTORY
-function updateBalance(){ document.getElementById('balance').innerText=balance; }
-function updateHistory(){ 
-  const div=document.getElementById('history');
-  div.innerHTML = historyList.map(h=>`<div class="history-entry">
-    <span>${h.user||currentUser.username} | ${h.game}: ${h.bet||'N/A'} | Resultado: ${h.result}</span>
-    <span style="color:${h.win?'lime':'red'};">${h.win?'+$'+h.amount:'-$'+h.amount}</span>
-  </div>`).join('');
-  updateAdminHistory();
-}
-
-// BAC BO
-function startBacBo(){ bet=null; bacboCountdown=10;
-  document.getElementById('bacboResult').innerText='';
-  document.getElementById('betBlue').disabled=false;
-  document.getElementById('betRed').disabled=false;
-  updateBacboTimer();
-  bacboTimer=setInterval(()=>{ bacboCountdown--; updateBacboTimer(); if(bacboCountdown<=0){ clearInterval(bacboTimer); document.getElementById('betBlue').disabled=true; document.getElementById('betRed').disabled=true; finalizeBacBo(); }},1000);
-}
-function updateBacboTimer(){ document.getElementById('bacboTimerFill').style.width=(bacboCountdown*10)+'%'; }
-function placeBet(color){ if(bet){ alert('Já apostou!'); return;} bet=color; soundBet.play(); }
-function finalizeBacBo(){
-  const colors=['Azul','Vermelho']; const result=colors[Math.floor(Math.random()*2)]; const resDiv=document.getElementById('bacboResult');
-  let flashes=0;
-  const flashInterval=setInterval(()=>{
-    resDiv.innerText=colors[Math.floor(Math.random()*2)];
-    resDiv.style.color=Math.random()>0.5?'blue':'red'; flashes++;
-    if(flashes>10){ clearInterval(flashInterval); resDiv.innerText=result; resDiv.style.color=result==='Azul'?'blue':'red';
-    let win=bet&&bet===result; let amount=win?200:100; balance+=win?200:-100; if(win)soundWin.play(); updateBalance();
-    historyList.push({user:currentUser.username, game:'Bac Bo',bet:bet||'Nenhuma',result,win,amount}); updateHistory(); setTimeout(startBacBo,3000); }
-  },150);
-}
-
-// ROLETA
-let roletaBet=null;
-function startRoleta(){ roletaCountdown=10; document.getElementById('roletaResult').innerText=''; updateRoletaTimer();
-  roletaTimer=setInterval(()=>{ roletaCountdown--; updateRoletaTimer(); if(roletaCountdown<=0){ clearInterval(roletaTimer); finalizeRoleta(); }},1000);}
-function updateRoletaTimer(){ document.getElementById('roletaTimerFill').style.width=(roletaCountdown*10)+'%'; }
-function betRoleta(color){ if(roletaBet){ alert('Já apostou!'); return;} roletaBet=color; soundBet.play(); }
-function finalizeRoleta(){
-  const colors=['Vermelho','Preto']; const result=colors[Math.floor(Math.random()*2)];
-  const resDiv=document.getElementById('roletaResult'); resDiv.innerText=result; let win=roletaBet&&roletaBet===result;
-  let amount=win?200:100; balance+=win?200:-100; if(win)soundWin.play(); updateBalance();
-  historyList.push({user:currentUser.username, game:'Roleta',bet:roletaBet||'Nenhuma',result,win,amount}); updateHistory(); setTimeout(startRoleta,3000); roletaBet=null;
-}
-
-// SLOTS
-function spinSlots(){
-  const symbols=['🍒','🍋','🍉','💎','7️⃣']; const result=[symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)]]; document.getElementById('slotsResult').innerText=result.join(' ');
-  let win=(result[0]===result[1]&&result[1]===result[2]); let amount=win?500:100; balance+=win?500:-100; if(win)soundWin.play(); updateBalance();
-  historyList.push({user:currentUser.username, game:'Slots',bet:'-',result:result.join(''),win,amount}); updateHistory();
-}
-
-// BLACKJACK
-function playBlackjack(){
-  const player=Math.floor(Math.random()*21)+1; const dealer=Math.floor(Math.random()*21)+1;
-  const resultDiv=document.getElementById('blackjackResult'); resultDiv.innerText=`Você: ${player} | Dealer: ${dealer}`;
-  let win=player>dealer && player<=21; let amount=win?300:150; balance+=win?300:-150; if(win)soundWin.play(); updateBalance();
-  historyList.push({user:currentUser.username, game:'Blackjack',bet:'-',result:`Você ${player} / Dealer ${dealer}`,win,amount}); updateHistory();
-}
-</script>
-
-</body>
-</html>
+const users = [
+  {username:'kawan', password:'123', balance
+   
