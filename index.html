@@ -5,13 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DRAKENATION Ultra Casino</title>
 <style>
-body {
-  margin:0;
-  font-family:Arial,sans-serif;
-  background: radial-gradient(circle at top,#111,#000);
-  color:#fff;
-  text-align:center;
-}
+body { margin:0; font-family:Arial,sans-serif; background:radial-gradient(circle at top,#111,#000); color:#fff; text-align:center; }
 header { padding:20px; }
 h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 .wallet { background:#222; padding:12px 20px; border-radius:12px; display:inline-block; margin-bottom:20px; font-size:20px; box-shadow:0 0 10px #a020f0; display:none; }
@@ -21,7 +15,7 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 #loginForm input { width:100%; padding:10px; margin:5px 0; border-radius:8px; border:none; }
 .game-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:20px; padding:20px; display:none; }
 .game-card { background:#222; border-radius:16px; padding:20px; position:relative; box-shadow:0 0 20px #a020f0 inset; overflow:hidden; min-height:320px; }
-.game-card video { width:100%; border-radius:16px; opacity:0.6; position:absolute; top:0; left:0; z-index:0; }
+.game-card img { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.6; z-index:0; border-radius:16px; }
 .game-content { position:relative; z-index:1; }
 .game-result { font-size:32px; font-weight:bold; margin-top:20px; text-shadow:0 0 10px #000; transition: all 0.5s ease; }
 .timer-bar { width:100%; height:20px; background:#555; border-radius:10px; overflow:hidden; margin:10px 0; }
@@ -35,10 +29,9 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 
 <header>
 <h1>🎲 DRAKENATION Ultra Casino 🎲</h1>
-<div class="wallet" id="wallet">💰 Saldo: $<span id="balance">0</span></div>
+<div class="wallet" id="wallet">💰 Saldo: $<span id="balance">0</span> <button class="btn" onclick="sacar()">Sacar</button></div>
 </header>
 
-<!-- Formulário de login -->
 <div id="loginForm">
   <h2>Criar Conta / Entrar</h2>
   <input type="text" id="username" placeholder="Nome de usuário">
@@ -47,16 +40,21 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 </div>
 
 <div class="game-container" id="games">
-<div class="game-card" id="bacboCard">
-  <video autoplay loop muted src="https://media.giphy.com/media/3o7abld9E9z3zjv5AA/giphy.mp4"></video>
-  <div class="game-content">
-    <h2>Bac Bo (Azul/Vermelho)</h2>
-    <div class="game-result" id="bacboResult"></div>
-    <div class="timer-bar"><div class="timer-fill" id="bacboTimerFill"></div></div>
-    <button class="btn" id="betBlue" onclick="placeBet('Azul')">Apostar Azul</button>
-    <button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
+  <!-- Bac Bo -->
+  <div class="game-card" id="bacboCard">
+    <img src="dealer.gif" alt="Dealer">
+    <div class="game-content">
+      <h2>Bac Bo (Azul/Vermelho)</h2>
+      <div class="game-result" id="bacboResult"></div>
+      <div class="timer-bar"><div class="timer-fill" id="bacboTimerFill"></div></div>
+      <button class="btn" id="betBlue" onclick="placeBet('Azul')">Apostar Azul</button>
+      <button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
+    </div>
   </div>
-</div>
+  <!-- Outros jogos -->
+  <div class="game-card"><h2>🎡 Roleta</h2><button class="btn" onclick="alert('Roleta ainda em desenvolvimento!')">Jogar Agora</button></div>
+  <div class="game-card"><h2>🎰 Slots</h2><button class="btn" onclick="alert('Slots ainda em desenvolvimento!')">Jogar Agora</button></div>
+  <div class="game-card"><h2>🃏 Blackjack</h2><button class="btn" onclick="alert('Blackjack ainda em desenvolvimento!')">Jogar Agora</button></div>
 </div>
 
 <section class="history" id="historySection">
@@ -74,13 +72,14 @@ let bet = null;
 let bacboCountdown = 10;
 let bacboTimer;
 
-// Login / Criar Conta
+const soundBet = document.getElementById('soundBet');
+const soundWin = document.getElementById('soundWin');
+
+// Login
 function login(){
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
   if(!username || !password){ alert('Preencha todos os campos!'); return; }
-
-  // Salva no localStorage
   localStorage.setItem('casinoUser', JSON.stringify({username,password,balance}));
   document.getElementById('loginForm').style.display='none';
   document.getElementById('games').style.display='grid';
@@ -88,6 +87,17 @@ function login(){
   document.getElementById('historySection').style.display='block';
   updateBalance();
   startBacBo();
+}
+
+// Sacar
+function sacar(){
+  let valor = prompt('Quanto deseja sacar?');
+  valor = parseInt(valor);
+  if(valor>0 && valor<=balance){
+    balance -= valor;
+    updateBalance();
+    alert(`Você sacou $${valor}`);
+  } else alert('Valor inválido!');
 }
 
 // Atualizar saldo e histórico
@@ -101,9 +111,65 @@ function updateHistory(){
 }
 
 // Bac Bo ultra realista
-const soundBet = document.getElementById('soundBet');
-const soundWin = document.getElementById('soundWin');
+function startBacBo(){
+  bet=null;
+  bacboCountdown=10;
+  document.getElementById('bacboResult').innerText='';
+  document.getElementById('betBlue').disabled=false;
+  document.getElementById('betRed').disabled=false;
+  updateTimerFill();
 
+  bacboTimer=setInterval(()=>{
+    bacboCountdown--;
+    updateTimerFill();
+    if(bacboCountdown<=0){
+      clearInterval(bacboTimer);
+      document.getElementById('betBlue').disabled=true;
+      document.getElementById('betRed').disabled=true;
+      finalizeBacBo();
+    }
+  },1000);
+}
+
+function updateTimerFill(){
+  const fill = document.getElementById('bacboTimerFill');
+  fill.style.width = (bacboCountdown*10)+'%';
+}
+
+function placeBet(color){
+  if(bet){ alert('Já apostou!'); return; }
+  bet=color;
+  soundBet.play();
+}
+
+function finalizeBacBo(){
+  const colors=['Azul','Vermelho'];
+  const result=colors[Math.floor(Math.random()*2)];
+  const resDiv = document.getElementById('bacboResult');
+  let flashes = 0;
+  const flashInterval = setInterval(()=>{
+    resDiv.innerText = colors[Math.floor(Math.random()*2)];
+    resDiv.style.color = Math.random()>0.5?'blue':'red';
+    flashes++;
+    if(flashes>10){
+      clearInterval(flashInterval);
+      resDiv.innerText = result;
+      resDiv.style.color = result==='Azul'?'blue':'red';
+      let win=bet && bet===result;
+      let amount=win?200:100;
+      balance += win?200:-100;
+      if(win) soundWin.play();
+      updateBalance();
+      historyList.push({game:'Bac Bo', bet:bet||'Nenhuma', result, win, amount});
+      updateHistory();
+      setTimeout(startBacBo,3000);
+    }
+  },150);
+}
+</script>
+
+</body>
+</html>
 function startBacBo(){
   bet=null;
   bacboCountdown=10;
