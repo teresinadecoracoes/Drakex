@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DRAKENATION Casino</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #000, #111, #2d0a3f);
+      color: white;
+      text-align: center;
+    }
+    header {
+      padding: 30px;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: bold;
+    }
+    .btn {
+      background: purple;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn:hover {
+      background: #a020f0;
+    }
+    .wallet {
+      background: #222;
+      padding: 12px 20px;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: #222;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.6);
+    }
+    .history {
+      padding: 20px;
+      text-align: left;
+      max-width: 800px;
+      margin: auto;
+    }
+    .history-entry {
+      background: #222;
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    footer {
+      border-top: 1px solid #333;
+      color: gray;
+      padding: 20px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎲 DRAKENATION 🎲</h1>
+    <p>Entre no mundo do entretenimento e jogue os melhores jogos de cassino online.</p>
+    <button class="btn" onclick="login()" id="loginBtn">Criar Conta / Entrar</button>
+    <p id="welcomeMsg" style="color:lime; font-weight:bold; display:none;">Bem-vindo(a) de volta!</p>
+  </header>  <div id="wallet" class="wallet" style="display:none;">💰 Saldo: $<span id="balance">1000</span></div>  <section class="games">
+    <div class="card">
+      <h2>🎡 Roleta</h2>
+      <button class="btn" onclick="play('Roleta')">Jogar Agora</button>
+    </div>
+    <div class="card">
+      <h2>🎰 Slots</h2>
+      <button class="btn" onclick="play('Slots')">Jogar Agora</button>
+    </div>
+    <div class="card">
+      <h2>🃏 Blackjack</h2>
+      <button class="btn" onclick="play('Blackjack')">Jogar Agora</button>
+    </div>
+  </section>  <section class="history">
+    <h2>📜 Histórico de Jogos</h2>
+    <div id="history"></div>
+  </section>  <footer>
+    © 2025 DRAKENATION Casino - Todos os direitos reservados.
+  </footer>  <script>
+    let loggedIn = false;
+    let balance = 1000;
+    let historyList = [];
+
+    function login() {
+      loggedIn = true;
+      document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("welcomeMsg").style.display = "block";
+      document.getElementById("wallet").style.display = "inline-block";
+    }
+
+    function play(game) {
+      if (!loggedIn) {
+        alert("Você precisa entrar primeiro!");
+        return;
+      }
+      const bet = 50;
+      if (balance < bet) {
+        alert("Saldo insuficiente!");
+        return;
+      }
+      const result = Math.random() > 0.5 ? "Ganhou" : "Perdeu";
+      balance = result === "Ganhou" ? balance + bet : balance - bet;
+      document.getElementById("balance").innerText = balance;
+
+      const entry = document.createElement("div");
+      entry.className = "history-entry";
+      entry.innerHTML = `<span>${game}</span><span style="color:${result==='Ganhou'?'lime':'red'}">${result}</span><span>Aposta: $${bet}</span><span>Saldo: $${balance}</span>`;
+
+      document.getElementById("history").prepend(entry);
+    }
+  </script></body>
+</html>
