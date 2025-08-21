@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DRAKENATION Bac Bo</title>
+<title>DRAKENATION Live Casino</title>
 <style>
 body {
   margin:0;
@@ -12,17 +12,15 @@ body {
   color:#fff;
   text-align:center;
 }
-header {
-  padding:30px;
-}
-h1 { font-size:48px; margin-bottom:10px; }
+header { padding:20px; }
+h1 { font-size:42px; text-shadow:0 0 10px #a020f0; }
 .wallet { background:#222; padding:12px 20px; border-radius:12px; display:inline-block; margin-bottom:20px; font-size:20px; }
-.btn { background:purple; color:#fff; border:none; padding:12px 24px; font-size:18px; border-radius:12px; cursor:pointer; margin:10px; transition:0.3s; }
-.btn:hover { background:#a020f0; box-shadow:0 0 10px #a020f0; }
-#bacbo { position:relative; width:400px; height:300px; margin:20px auto; background:#222; border-radius:16px; overflow:hidden; }
-#dealer { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:150px; opacity:0.7; }
-.color-result { font-size:48px; font-weight:bold; margin-top:30px; }
-.timer { font-size:24px; margin:10px; }
+.btn { background:purple; color:#fff; border:none; padding:12px 24px; font-size:18px; border-radius:12px; cursor:pointer; margin:5px; transition:0.3s; }
+.btn:hover { background:#a020f0; box-shadow:0 0 15px #a020f0; }
+.game-container { display:grid; grid-template-columns:repeat(auto-fit,minmax(350px,1fr)); gap:20px; padding:20px; }
+.game-card { background:#222; border-radius:16px; padding:20px; position:relative; box-shadow:0 0 15px #a020f0; }
+.game-card img { width:120px; position:absolute; bottom:10px; right:10px; opacity:0.7; border-radius:8px; }
+.game-result { font-size:32px; font-weight:bold; margin-top:20px; text-shadow:0 0 10px #000; }
 .history { padding:20px; max-width:600px; margin:auto; text-align:left; }
 .history-entry { background:#222; padding:10px; margin:5px 0; border-radius:8px; display:flex; justify-content:space-between; }
 </style>
@@ -30,20 +28,50 @@ h1 { font-size:48px; margin-bottom:10px; }
 <body>
 
 <header>
-<h1>🎲 DRAKENATION Bac Bo 🎲</h1>
-<div id="wallet" class="wallet">💰 Saldo: $<span id="balance">1000</span></div>
-<div class="timer">Tempo para aposta: <span id="countdown">10</span>s</div>
-<button class="btn" id="betBlue" onclick="placeBet('Azul')">Apostar Azul</button>
-<button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
+<h1>🎲 DRAKENATION Live Casino 🎲</h1>
+<div class="wallet">💰 Saldo: $<span id="balance">1000</span></div>
 </header>
 
-<div id="bacbo">
-  <img src="https://i.imgur.com/NrH7Y4j.png" id="dealer" alt="Dealer">
-  <div id="result" class="color-result"></div>
+<div class="game-container">
+
+<!-- Bac Bo -->
+<div class="game-card" id="bacboCard">
+  <h2>Bac Bo (Azul/Vermelho)</h2>
+  <div class="game-result" id="bacboResult"></div>
+  <div class="timer">Tempo para apostar: <span id="bacboCountdown">10</span>s</div>
+  <button class="btn" id="betBlue" onclick="placeBet('Azul')">Apostar Azul</button>
+  <button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
+  <img src="https://i.imgur.com/NrH7Y4j.png" alt="Dealer">
+</div>
+
+<!-- Roleta -->
+<div class="game-card" id="rouletteCard">
+  <h2>🎡 Roleta</h2>
+  <div class="game-result" id="rouletteResult"></div>
+  <button class="btn" onclick="playRoulette()">Girar Roleta</button>
+  <img src="https://i.imgur.com/NrH7Y4j.png" alt="Dealer">
+</div>
+
+<!-- Slots -->
+<div class="game-card" id="slotsCard">
+  <h2>🎰 Slots</h2>
+  <div class="game-result" id="slotsResult"></div>
+  <button class="btn" onclick="playSlots()">Girar Slots</button>
+  <img src="https://i.imgur.com/NrH7Y4j.png" alt="Dealer">
+</div>
+
+<!-- Blackjack -->
+<div class="game-card" id="blackjackCard">
+  <h2>🃏 Blackjack</h2>
+  <div class="game-result" id="blackjackResult"></div>
+  <button class="btn" onclick="playBlackjack()">Jogar Blackjack</button>
+  <img src="https://i.imgur.com/NrH7Y4j.png" alt="Dealer">
+</div>
+
 </div>
 
 <section class="history">
-<h2>📜 Histórico de Bac Bo</h2>
+<h2>📜 Histórico de Jogos</h2>
 <div id="history"></div>
 </section>
 
@@ -51,67 +79,104 @@ h1 { font-size:48px; margin-bottom:10px; }
 let balance = 1000;
 let historyList = [];
 let bet = null;
-let countdown = 10;
-let timer;
+let bacboCountdown = 10;
+let bacboTimer;
 
-function startRound(){
-  bet = null;
-  countdown = 10;
-  document.getElementById('countdown').innerText = countdown;
-  document.getElementById('result').innerText = '';
-  document.getElementById('betBlue').disabled=false;
-  document.getElementById('betRed').disabled=false;
-
-  timer = setInterval(()=>{
-    countdown--;
-    document.getElementById('countdown').innerText = countdown;
-    if(countdown<=0){
-      clearInterval(timer);
-      document.getElementById('betBlue').disabled=true;
-      document.getElementById('betRed').disabled=true;
-      finalizeRound();
-    }
-  },1000);
-}
-
-function placeBet(color){
-  if(bet){
-    alert('Você já apostou nesta rodada!');
-    return;
-  }
-  bet=color;
-  alert('Aposta registrada: ' + color);
-}
-
-function finalizeRound(){
-  // resultado aleatório: Azul ou Vermelho
-  const colors=['Azul','Vermelho'];
-  const result=colors[Math.floor(Math.random()*2)];
-  document.getElementById('result').innerText = result;
-  document.getElementById('result').style.color = result==='Azul'?'blue':'red';
-
-  let amount = 100;
-  let win = bet && bet===result;
-  if(win) balance += 200; // ganha 2x
-  document.getElementById('balance').innerText = balance;
-
-  historyList.push({bet:bet||'Nenhuma', result, win, amount:win?200:100});
-  updateHistory();
-
-  // inicia próxima rodada em 5 segundos
-  setTimeout(startRound,5000);
-}
-
-function updateHistory(){
+function updateBalance(){ document.getElementById('balance').innerText=balance; }
+function updateHistory(){ 
   const div=document.getElementById('history');
   div.innerHTML = historyList.map(h=>`<div class="history-entry">
-    <span>Aposta: ${h.bet} | Resultado: ${h.result}</span>
+    <span>${h.game}: ${h.bet || 'N/A'} | Resultado: ${h.result}</span>
     <span style="color:${h.win?'lime':'red'};">${h.win?'+$'+h.amount:'-$'+h.amount}</span>
   </div>`).join('');
 }
 
-// inicia primeira rodada
-startRound();
+// Bac Bo
+function startBacBo(){
+  bet=null;
+  bacboCountdown=10;
+  document.getElementById('bacboCountdown').innerText=bacboCountdown;
+  document.getElementById('bacboResult').innerText='';
+  document.getElementById('betBlue').disabled=false;
+  document.getElementById('betRed').disabled=false;
+
+  bacboTimer=setInterval(()=>{
+    bacboCountdown--;
+    document.getElementById('bacboCountdown').innerText=bacboCountdown;
+    if(bacboCountdown<=0){
+      clearInterval(bacboTimer);
+      document.getElementById('betBlue').disabled=true;
+      document.getElementById('betRed').disabled=true;
+      finalizeBacBo();
+    }
+  },1000);
+}
+function placeBet(color){
+  if(bet){ alert('Já apostou!'); return; }
+  bet=color;
+  alert('Aposta registrada: '+color);
+}
+function finalizeBacBo(){
+  const colors=['Azul','Vermelho'];
+  const result=colors[Math.floor(Math.random()*2)];
+  document.getElementById('bacboResult').innerText=result;
+  document.getElementById('bacboResult').style.color=result==='Azul'?'blue':'red';
+
+  let win=bet && bet===result;
+  let amount=win?200:100;
+  balance += win?200:-100;
+  updateBalance();
+  historyList.push({game:'Bac Bo', bet:bet||'Nenhuma', result, win, amount});
+  updateHistory();
+
+  setTimeout(startBacBo,5000);
+}
+
+// Roleta
+function playRoulette(){
+  if(balance<100){ alert('Saldo insuficiente!'); return; }
+  balance-=100;
+  const number=Math.floor(Math.random()*36);
+  document.getElementById('rouletteResult').innerText=number;
+  balance+=number%2===0?200:0;
+  updateBalance();
+  historyList.push({game:'Roleta', bet:'Aposta', result:number, win:number%2===0, amount:number%2===0?200:100});
+  updateHistory();
+}
+
+// Slots
+function playSlots(){
+  if(balance<100){ alert('Saldo insuficiente!'); return; }
+  balance-=100;
+  const symbols=['🍒','🍋','🔔','⭐'];
+  let res='';
+  for(let i=0;i<3;i++){ res+=symbols[Math.floor(Math.random()*symbols.length)]; }
+  document.getElementById('slotsResult').innerText=res;
+  let win=res[0]===res[1] && res[1]===res[2];
+  balance+=win?500:0;
+  updateBalance();
+  historyList.push({game:'Slots', bet:'Girar', result:res, win, amount:win?500:100});
+  updateHistory();
+}
+
+// Blackjack
+function playBlackjack(){
+  if(balance<100){ alert('Saldo insuficiente!'); return; }
+  balance-=100;
+  const player=Math.floor(Math.random()*11)+10;
+  const dealer=Math.floor(Math.random()*11)+10;
+  const result=player>dealer?'Vitória':player<dealer?'Derrota':'Empate';
+  if(result==='Vitória') balance+=200;
+  else if(result==='Empate') balance+=100;
+  document.getElementById('blackjackResult').innerText=`Você: ${player} | Dealer: ${dealer} | ${result}`;
+  updateBalance();
+  historyList.push({game:'Blackjack', bet:'Jogar', result, win:result==='Vitória', amount:result==='Vitória'?200:100});
+  updateHistory();
+}
+
+// iniciar Bac Bo ao carregar
+startBacBo();
+updateBalance();
 </script>
 
 </body>
