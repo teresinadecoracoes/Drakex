@@ -17,7 +17,7 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
 .game-card { background:#222; border-radius:16px; padding:20px; position:relative; box-shadow:0 0 20px #a020f0 inset; overflow:hidden; min-height:320px; }
 .game-card img { position:absolute; top:0; left:0; width:100%; height:100%; opacity:0.6; z-index:0; border-radius:16px; }
 .game-content { position:relative; z-index:1; }
-.game-result { font-size:32px; font-weight:bold; margin-top:20px; text-shadow:0 0 10px #000; transition: all 0.5s ease; }
+.game-result { font-size:28px; font-weight:bold; margin-top:20px; text-shadow:0 0 10px #000; transition: all 0.5s ease; }
 .timer-bar { width:100%; height:20px; background:#555; border-radius:10px; overflow:hidden; margin:10px 0; }
 .timer-fill { height:100%; background:lime; width:100%; transition: width 1s linear; }
 .history { padding:20px; max-width:800px; margin:auto; text-align:left; display:none; }
@@ -51,10 +51,38 @@ h1 { font-size:42px; text-shadow:0 0 20px #a020f0; }
       <button class="btn" id="betRed" onclick="placeBet('Vermelho')">Apostar Vermelho</button>
     </div>
   </div>
-  <!-- Outros jogos -->
-  <div class="game-card"><h2>🎡 Roleta</h2><button class="btn" onclick="alert('Roleta ainda em desenvolvimento!')">Jogar Agora</button></div>
-  <div class="game-card"><h2>🎰 Slots</h2><button class="btn" onclick="alert('Slots ainda em desenvolvimento!')">Jogar Agora</button></div>
-  <div class="game-card"><h2>🃏 Blackjack</h2><button class="btn" onclick="alert('Blackjack ainda em desenvolvimento!')">Jogar Agora</button></div>
+
+  <!-- Roleta -->
+  <div class="game-card" id="roletaCard">
+    <img src="dealer.gif" alt="Dealer">
+    <div class="game-content">
+      <h2>🎡 Roleta</h2>
+      <div class="game-result" id="roletaResult"></div>
+      <div class="timer-bar"><div class="timer-fill" id="roletaTimerFill"></div></div>
+      <button class="btn" onclick="betRoleta('Vermelho')">Apostar Vermelho</button>
+      <button class="btn" onclick="betRoleta('Preto')">Apostar Preto</button>
+    </div>
+  </div>
+
+  <!-- Slots -->
+  <div class="game-card" id="slotsCard">
+    <img src="dealer.gif" alt="Dealer">
+    <div class="game-content">
+      <h2>🎰 Slots</h2>
+      <div class="game-result" id="slotsResult"></div>
+      <button class="btn" onclick="spinSlots()">Girar</button>
+    </div>
+  </div>
+
+  <!-- Blackjack -->
+  <div class="game-card" id="blackjackCard">
+    <img src="dealer.gif" alt="Dealer">
+    <div class="game-content">
+      <h2>🃏 Blackjack</h2>
+      <div class="game-result" id="blackjackResult"></div>
+      <button class="btn" onclick="playBlackjack()">Jogar</button>
+    </div>
+  </div>
 </div>
 
 <section class="history" id="historySection">
@@ -71,15 +99,17 @@ let historyList = [];
 let bet = null;
 let bacboCountdown = 10;
 let bacboTimer;
+let roletaCountdown = 10;
+let roletaTimer;
 
 const soundBet = document.getElementById('soundBet');
 const soundWin = document.getElementById('soundWin');
 
-// Login
+// LOGIN
 function login(){
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
-  if(!username || !password){ alert('Preencha todos os campos!'); return; }
+  if(!username||!password){ alert('Preencha todos os campos!'); return; }
   localStorage.setItem('casinoUser', JSON.stringify({username,password,balance}));
   document.getElementById('loginForm').style.display='none';
   document.getElementById('games').style.display='grid';
@@ -87,84 +117,80 @@ function login(){
   document.getElementById('historySection').style.display='block';
   updateBalance();
   startBacBo();
+  startRoleta();
 }
 
-// Sacar
+// SACAR
 function sacar(){
   let valor = prompt('Quanto deseja sacar?');
   valor = parseInt(valor);
-  if(valor>0 && valor<=balance){
-    balance -= valor;
-    updateBalance();
-    alert(`Você sacou $${valor}`);
-  } else alert('Valor inválido!');
+  if(valor>0 && valor<=balance){ balance-=valor; updateBalance(); alert(`Você sacou $${valor}`);}
+  else alert('Valor inválido!');
 }
 
-// Atualizar saldo e histórico
+// BALANCE / HISTORY
 function updateBalance(){ document.getElementById('balance').innerText=balance; }
 function updateHistory(){ 
   const div=document.getElementById('history');
   div.innerHTML = historyList.map(h=>`<div class="history-entry">
-    <span>${h.game}: ${h.bet || 'N/A'} | Resultado: ${h.result}</span>
+    <span>${h.game}: ${h.bet||'N/A'} | Resultado: ${h.result}</span>
     <span style="color:${h.win?'lime':'red'};">${h.win?'+$'+h.amount:'-$'+h.amount}</span>
   </div>`).join('');
 }
 
-// Bac Bo ultra realista
+// BAC BO
 function startBacBo(){
-  bet=null;
-  bacboCountdown=10;
+  bet=null; bacboCountdown=10;
   document.getElementById('bacboResult').innerText='';
   document.getElementById('betBlue').disabled=false;
   document.getElementById('betRed').disabled=false;
-  updateTimerFill();
-
+  updateBacboTimer();
   bacboTimer=setInterval(()=>{
     bacboCountdown--;
-    updateTimerFill();
-    if(bacboCountdown<=0){
-      clearInterval(bacboTimer);
-      document.getElementById('betBlue').disabled=true;
-      document.getElementById('betRed').disabled=true;
-      finalizeBacBo();
-    }
+    updateBacboTimer();
+    if(bacboCountdown<=0){ clearInterval(bacboTimer); document.getElementById('betBlue').disabled=true; document.getElementById('betRed').disabled=true; finalizeBacBo();}
   },1000);
 }
-
-function updateTimerFill(){
-  const fill = document.getElementById('bacboTimerFill');
-  fill.style.width = (bacboCountdown*10)+'%';
-}
-
-function placeBet(color){
-  if(bet){ alert('Já apostou!'); return; }
-  bet=color;
-  soundBet.play();
-}
-
+function updateBacboTimer(){ document.getElementById('bacboTimerFill').style.width=(bacboCountdown*10)+'%'; }
+function placeBet(color){ if(bet){ alert('Já apostou!'); return;} bet=color; soundBet.play(); }
 function finalizeBacBo(){
-  const colors=['Azul','Vermelho'];
-  const result=colors[Math.floor(Math.random()*2)];
-  const resDiv = document.getElementById('bacboResult');
-  let flashes = 0;
-  const flashInterval = setInterval(()=>{
-    resDiv.innerText = colors[Math.floor(Math.random()*2)];
-    resDiv.style.color = Math.random()>0.5?'blue':'red';
-    flashes++;
-    if(flashes>10){
-      clearInterval(flashInterval);
-      resDiv.innerText = result;
-      resDiv.style.color = result==='Azul'?'blue':'red';
-      let win=bet && bet===result;
-      let amount=win?200:100;
-      balance += win?200:-100;
-      if(win) soundWin.play();
-      updateBalance();
-      historyList.push({game:'Bac Bo', bet:bet||'Nenhuma', result, win, amount});
-      updateHistory();
-      setTimeout(startBacBo,3000);
-    }
+  const colors=['Azul','Vermelho']; const result=colors[Math.floor(Math.random()*2)]; const resDiv=document.getElementById('bacboResult');
+  let flashes=0;
+  const flashInterval=setInterval(()=>{
+    resDiv.innerText=colors[Math.floor(Math.random()*2)];
+    resDiv.style.color=Math.random()>0.5?'blue':'red'; flashes++;
+    if(flashes>10){ clearInterval(flashInterval); resDiv.innerText=result; resDiv.style.color=result==='Azul'?'blue':'red';
+    let win=bet&&bet===result; let amount=win?200:100; balance+=win?200:-100; if(win)soundWin.play(); updateBalance();
+    historyList.push({game:'Bac Bo',bet:bet||'Nenhuma',result,win,amount}); updateHistory(); setTimeout(startBacBo,3000); }
   },150);
+}
+
+// ROLETA
+let roletaBet=null;
+function startRoleta(){ roletaCountdown=10; document.getElementById('roletaResult').innerText=''; updateRoletaTimer();
+  roletaTimer=setInterval(()=>{ roletaCountdown--; updateRoletaTimer(); if(roletaCountdown<=0){ clearInterval(roletaTimer); finalizeRoleta(); }},1000);}
+function updateRoletaTimer(){ document.getElementById('roletaTimerFill').style.width=(roletaCountdown*10)+'%'; }
+function betRoleta(color){ if(roletaBet){ alert('Já apostou!'); return;} roletaBet=color; soundBet.play(); }
+function finalizeRoleta(){
+  const colors=['Vermelho','Preto']; const result=colors[Math.floor(Math.random()*2)];
+  const resDiv=document.getElementById('roletaResult'); resDiv.innerText=result; let win=roletaBet&&roletaBet===result;
+  let amount=win?200:100; balance+=win?200:-100; if(win)soundWin.play(); updateBalance();
+  historyList.push({game:'Roleta',bet:roletaBet||'Nenhuma',result,win,amount}); updateHistory(); setTimeout(startRoleta,3000); roletaBet=null;
+}
+
+// SLOTS
+function spinSlots(){
+  const symbols=['🍒','🍋','🍉','💎','7️⃣']; const result=[symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)],symbols[Math.floor(Math.random()*symbols.length)]]; document.getElementById('slotsResult').innerText=result.join(' ');
+  let win=(result[0]===result[1]&&result[1]===result[2]); let amount=win?500:100; balance+=win?500:-100; if(win)soundWin.play(); updateBalance();
+  historyList.push({game:'Slots',bet:'-',result:result.join(''),win,amount}); updateHistory();
+}
+
+// BLACKJACK
+function playBlackjack(){
+  const player=Math.floor(Math.random()*21)+1; const dealer=Math.floor(Math.random()*21)+1;
+  const resultDiv=document.getElementById('blackjackResult'); resultDiv.innerText=`Você: ${player} | Dealer: ${dealer}`;
+  let win=player>dealer && player<=21; let amount=win?300:150; balance+=win?300:-150; if(win)soundWin.play(); updateBalance();
+  historyList.push({game:'Blackjack',bet:'-',result:`Você ${player} / Dealer ${dealer}`,win,amount}); updateHistory();
 }
 </script>
 
