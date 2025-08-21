@@ -102,15 +102,21 @@ let bacboTimer;
 let roletaCountdown = 10;
 let roletaTimer;
 
+const users = [
+  {username:'kawan', password:'123', balance:1000},
+  {username:'george', password:'123', balance:1000},
+  {username:'admin1', password:'admin', balance:Infinity} // admin
+];
+
 const soundBet = document.getElementById('soundBet');
 const soundWin = document.getElementById('soundWin');
 
-// LOGIN
 function login(){
-  const username = document.getElementById('username').value;
+  const username = document.getElementById('username').value.toLowerCase();
   const password = document.getElementById('password').value;
-  if(!username||!password){ alert('Preencha todos os campos!'); return; }
-  localStorage.setItem('casinoUser', JSON.stringify({username,password,balance}));
+  const user = users.find(u=>u.username===username && u.password===password);
+  if(!user){ alert('Usuário ou senha incorretos!'); return; }
+  balance = user.balance;
   document.getElementById('loginForm').style.display='none';
   document.getElementById('games').style.display='grid';
   document.getElementById('wallet').style.display='inline-block';
@@ -120,7 +126,6 @@ function login(){
   startRoleta();
 }
 
-// SACAR
 function sacar(){
   let valor = prompt('Quanto deseja sacar?');
   valor = parseInt(valor);
@@ -128,7 +133,6 @@ function sacar(){
   else alert('Valor inválido!');
 }
 
-// BALANCE / HISTORY
 function updateBalance(){ document.getElementById('balance').innerText=balance; }
 function updateHistory(){ 
   const div=document.getElementById('history');
@@ -139,17 +143,12 @@ function updateHistory(){
 }
 
 // BAC BO
-function startBacBo(){
-  bet=null; bacboCountdown=10;
+function startBacBo(){ bet=null; bacboCountdown=10;
   document.getElementById('bacboResult').innerText='';
   document.getElementById('betBlue').disabled=false;
   document.getElementById('betRed').disabled=false;
   updateBacboTimer();
-  bacboTimer=setInterval(()=>{
-    bacboCountdown--;
-    updateBacboTimer();
-    if(bacboCountdown<=0){ clearInterval(bacboTimer); document.getElementById('betBlue').disabled=true; document.getElementById('betRed').disabled=true; finalizeBacBo();}
-  },1000);
+  bacboTimer=setInterval(()=>{ bacboCountdown--; updateBacboTimer(); if(bacboCountdown<=0){ clearInterval(bacboTimer); document.getElementById('betBlue').disabled=true; document.getElementById('betRed').disabled=true; finalizeBacBo(); }},1000);
 }
 function updateBacboTimer(){ document.getElementById('bacboTimerFill').style.width=(bacboCountdown*10)+'%'; }
 function placeBet(color){ if(bet){ alert('Já apostou!'); return;} bet=color; soundBet.play(); }
